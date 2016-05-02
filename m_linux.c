@@ -111,25 +111,25 @@ static int memory_stats[NMEMSTATS];
 
 /*======================================================================*/
 
-static inline char *
-skip_ws(const char *p)
+static inline char * skip_ws(const char *p)
 {
     while (isspace(*p)) p++;
     return (char *)p;
 }
     
-static inline char *
-skip_token(const char *p)
+static inline char *skip_token(const char *p)
 {
     while (isspace(*p)) p++;
     while (*p && !isspace(*p)) p++;
     return (char *)p;
 }
+/*
+Linux 内核提供了一种通过/proc 文件系统，在运行时
+访问内核内部数据结构、改变内核设置的机制。 
+ */
 
- 
-int
-machine_init(statics)
-    struct statics *statics;
+ //进入proc文件系统,设置全局变量
+int machine_init(struct statics *statics)
 {
     /* make sure the proc filesystem is mounted */
     {
@@ -140,7 +140,6 @@ machine_init(statics)
 	    return -1;
 	}
     }
-
     /* chdir to the proc filesystem to make things easier */
     chdir(PROCFS);
 
@@ -153,10 +152,8 @@ machine_init(statics)
     return 0;
 }
 
-
-void
-get_system_info(info)
-    struct system_info *info;
+//读取loadavg文件 查看最近CPU平均负载
+void get_system_info(struct system_info *info)
 {
     char buffer[4096+1];
     int fd, len;
@@ -170,9 +167,9 @@ get_system_info(info)
 	close(fd);
 	buffer[len] = '\0';
 
-	info->load_avg[0] = strtod(buffer, &p);
-	info->load_avg[1] = strtod(p, &p);
-	info->load_avg[2] = strtod(p, &p);
+	info->load_avg[0] = strtod(buffer, &p);//5分钟内的平均负载
+	info->load_avg[1] = strtod(p, &p);//10分钟内的平均负载
+	info->load_avg[2] = strtod(p, &p);//15分钟内的平均负载
 	p = skip_token(p);			/* skip running/tasks */
 	p = skip_ws(p);
 	if (*p)
